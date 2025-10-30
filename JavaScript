@@ -1,0 +1,131 @@
+/* Expense Tracker - script.js
+   Basic features:
+   - Add transaction (income or expense)
+   - Remove transaction
+   - Calculate balance, total income, total expense
+   - Persist data in localStorage
+*/
+
+// Get DOM elements
+const balance = document.getElementById('balance');
+const money_plus = document.getElementById('money-plus');
+const money_minus = document.getElementById('money-minus');
+const list = document.getElementById('list');
+const form = document.getElementById('form');
+const text = document.getElementById('text');
+const amount = document.getElementById('amount');
+
+const LOCAL_STORAGE_KEY = 'expenseTracker.transactions';
+
+// Get transactions from localStorage or start with empty array
+let transactions = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || [];
+
+// Helper: generate unique id
+function generateID() {
+  return Math.floor(Math.random() * 100000000);
+}
+
+// Add transaction to DOM list
+function addTransactionDOM(transaction) {
+  // Create list item
+  const sign = transaction.amount < 0 ? '-' : '+';
+  const item = document.createElement('li');
+
+  // Add class based on type
+  item.classList.add(transaction.amount < 0 ? 'minus' : 'plus');
+
+  // Format amount with rupee and two decimals
+  const formattedAmount = formatRupee(Math.abs(transaction.amount));
+
+  item.innerHTML = `
+    ${transaction.text} 
+    <span>${sign}₹${formattedAmount}</span>
+    <button class="delete-btn" onclick="removeTransaction(${transaction.id})" title="Delete">✖</button>
+  `;
+
+  list.prepend(item); // newest on top
+}
+
+// Update balance, income, expense
+function updateValues() {
+  const amounts = transactions.map(tx => tx.amount);
+  const total = amounts.reduce((acc, item) => acc + item, 0);
+  const income = amounts.filter(a => a > 0).reduce((acc, a) => acc + a, 0);
+  const expense = amounts.filter(a => a < 0).reduce((acc, a) => acc + a, 0);
+
+  balance.innerText = `₹${formatRupee(total)}`;
+  money_plus.innerText = `+₹${formatRupee(income)}`;
+  money_minus.innerText = `-₹${formatRupee(Math.abs(expense))}`;
+}
+
+// Remove transaction by id
+function removeTransaction(id) {
+  transactions = transactions.filter(tx => tx.id !== id);
+  updateLocalStorage();
+  init(); // re-render
+}
+
+// Add transaction: form submit handler
+function addTransaction(e) {
+  e.preventDefault();
+
+  const textValue = text.value.trim();
+  const amountValue = amount.value.trim();
+
+  if (textValue === '' || amountValue === '') {
+    alert('Please enter description and amount');
+    return;
+  }
+
+  const amountNumber = +parseFloat(amountValue);
+  if (isNaN(amountNumber) || amountNumber === 0) {
+    alert('Please enter a valid non-zero number for amount');
+    return;
+  }
+
+  const transaction = {
+    id: generateID(),
+    text: textValue,
+    amount: amountNumber
+  };
+
+  transactions.push(transaction);
+
+  updateLocalStorage();
+  addTransactionDOM(transaction);
+  updateValues();
+
+  // Clear inputs
+  text.value = '';
+  amount.value = '';
+}
+
+// Save to localStorage
+function updateLocalStorage() {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(transactions));
+}
+
+// Format number to rupees with two decimals and comma grouping
+function formatRupee(value) {
+  // value is a number >= 0
+  // Use Intl.NumberFormat if available
+  try {
+    return new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+  } catch (err) {
+    return value.toFixed(2);
+  }
+}
+
+// Initialize app
+function init() {
+  list.innerHTML = '';
+  // Add each transaction to DOM (most recent first)
+  transactions.slice().reverse().forEach(addTransactionDOM);
+  updateValues();
+}
+
+// Event listeners
+form.addEventListener('submit', addTransaction);
+
+// initialize on load
+init();
