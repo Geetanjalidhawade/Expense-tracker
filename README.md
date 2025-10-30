@@ -1,2 +1,3 @@
-# Expense-tracker
-A simple web app to track daily income and expenses using HTML, CSS, and JavaScript. It calculates total balance, displays transaction history, and stores data in the browser’s local storage.     ---  Would you like me to also give you a longer “About” section or README description for the same repository
+# student record management system using linked list
+Here’s a short 320-character description (not words) of your project 
+This project manages student records using a linked list in C. It allows adding, displaying, searching, and deleting records dynamically. The system uses pointers and memory allocation to efficiently store data, demonstrating the practical use of data structures in record management.
